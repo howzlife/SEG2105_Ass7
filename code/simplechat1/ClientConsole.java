@@ -110,7 +110,6 @@ public class ClientConsole implements ChatIF
       System.exit(1);
     }
   }
-
   
   //Instance methods ************************************************
   
@@ -147,16 +146,9 @@ public class ClientConsole implements ChatIF
    */
   public void display(String message) 
   {
-	  //////////////////////////////////////// Added for E50b      MA/ND
-	  char temp = message.charAt(0); //Reads the first Character of the string message
-		 if (temp=='>') { // Checks for the first char 
-			 System.out.println("SERVER MSG" + message);
-		 }
-	  /////////////////////////////////////// Added for E50b      MA/ND
-		 else
-		 {
+	  
  System.out.println("> " + message);
-		 }
+		 
   }
 
   

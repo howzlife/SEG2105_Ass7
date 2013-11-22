@@ -88,7 +88,7 @@ public class BankServer extends AbstractServer
 			  }
 	  else 
 	  {	  // send to command handling
-			 handleCommand(message, login);
+			 handleCommand(message, login, client);
 	  }
 	  ///////////////////////////////////////////ADDED FOR E51B     MA/ND
     System.out.println("Message received: " + client.getInfo("loginID") + ": " + msg);
@@ -144,7 +144,7 @@ public class BankServer extends AbstractServer
 
   
   /////////////////////////////////////////////Added 50C      MA/ND
-  private void handleCommand(String command, String loginID) //New method created to handle server commands
+  private void handleCommand(String command, String loginID, ConnectionToClient client) //New method created to handle server commands
   {	
 	  System.out.println(command);
 	  BufferedReader fromConsole = new BufferedReader(new InputStreamReader(System.in));   // Creates new reader for the input
@@ -160,21 +160,27 @@ public class BankServer extends AbstractServer
 		 {
 			 do{
 				 try{
-				 System.out.println("Please enter S (savings) or C (chequings)");
-				 answer = fromConsole.readLine().toLowerCase();
+				 client.sendToClient("Please enter S (savings) or C (chequings)");
+				 answer = fromConsole.readLine();      //get next step from console
+				 System.out.println(answer);
 				 }
 						 catch (IOException ex) //If an error occurs
 				 {
 				 }
 			 } 
-			 while (!answer.equals("s") || !answer.equals("c"));
+			 while (!answer.equals("s") && !answer.equals("c"));
 	
 			 if (answer.equals("s"))
 			 {
 				 Savings save1 = new Savings(0, "0001", dt, loginID, 5, 50); //create savings account
-				 System.out.println("Savings account created. Your balance is");
-				 System.out.println("currently 0$. Please select one of the following:");
-				 System.out.println("Deposit, Withdraw, Transfer, Close ");
+				 try {
+				 client.sendToClient("Savings account created. Your balance is");
+				 client.sendToClient("currently 0$. Please select one of the following:");
+				 client.sendToClient("Deposit, Withdraw, Transfer, Close ");
+				 }
+			  		catch (IOException ex)
+			  		{	
+			  		}
 				 Boolean active = true;
 				 do{
 				 	try {

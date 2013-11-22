@@ -80,7 +80,6 @@ public class ChatClient extends AbstractClient
    */
   public void handleMessageFromServer(Object msg) 
   {
-       
     clientUI.display(msg.toString());
   }
 

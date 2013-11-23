@@ -124,13 +124,13 @@ public class ClientConsole implements ChatIF
     	do{
   		  System.out.println("Welcome! Select one of the following");
   		  System.out.println("***********************************");
-  		  System.out.println("***********************************");
-  		  System.out.println("**       New - Access - Close -  **");
+  		  System.out.println("**       New - View - Close -  **");
   		  System.out.println("**       Deposit - Withdraw -    **");
   		  System.out.println("********  Transfer - Exit *********");
   		  System.out.println("*******Please enter a command******");
+  		  System.out.println("***********************************");
         message = fromConsole.readLine().toLowerCase();
-    	} while (!message.equals("new") && !message.equals("access") && !message.equals("close") && !message.equals("deposit") && !message.equals("withdraw") && !message.equals("transfer") && !message.equals("exit"));
+    	} while (!message.equals("new") && !message.equals("view") && !message.equals("close") && !message.equals("deposit") && !message.equals("withdraw") && !message.equals("transfer") && !message.equals("exit"));
     	handleUICommand(message);
       }
     } 
@@ -151,6 +151,7 @@ public class ClientConsole implements ChatIF
 	BufferedReader fromConsole =  new BufferedReader(new InputStreamReader(System.in));
 	String accountType = "";
 	String temp = " ";
+	String name = " ";
 	if (command.equals("new"))   //"new" branch
 	{
 		do {
@@ -175,7 +176,16 @@ public class ClientConsole implements ChatIF
 	      System.out.println
 	        ("Unexpected error while reading from console!");
 	    }
-		command += "." + temp + "&";
+		System.out.println("Please enter a name for this account");   //initial deposit
+		try{
+		name = fromConsole.readLine();
+		}
+	    catch (Exception ex) 
+	    {
+	      System.out.println
+	        ("Unexpected error while reading from console!");
+	    }
+		command += "." + temp + "&" + name + "?";
 		
 		if (accountType.equals("s")){
 		System.out.println("Congratulations! You have a new Savings Account!");
@@ -198,8 +208,7 @@ public class ClientConsole implements ChatIF
         }	    
         catch (Exception ex) 
 	    {
-  	    }
-        client.handleMessageFromClientUI(command);   
+  	    }   
 	}
 	else if (command.equals("deposit"))
 	{
@@ -211,14 +220,78 @@ public class ClientConsole implements ChatIF
 		} catch (Exception ex) {};
 		System.out.println("Please enter the amount of the deposit");
 		try
-		{
-			deposit = fromConsole.readLine();  //read deposit amount, as a string
-		}
-		  catch (Exception ex) //If an error occurs
-		    {
-		    }
+		{deposit = fromConsole.readLine();}  //read deposit amount, as a string
+		  catch (Exception ex)  {}//If an error occurs
+		   
 		command += " " + id + "." + deposit + "&"; //Put together data string
         client.handleMessageFromClientUI(command); //Send to BankServer to be analysed 
+	}
+	
+	else if (command.equals("withdraw"))
+	{
+		String id = "";
+		String withdrawAmount = "";
+		System.out.println("Please enter the account id");
+		try{id = fromConsole.readLine();} //read account id, as a string
+		catch (Exception ex) {}
+		System.out.println("Please enter the amount of the withdrawal");
+		try {withdrawAmount = fromConsole.readLine();}
+		catch (Exception ex) {}
+		
+		command += " " + id + "." + withdrawAmount + "&"; //Put together data string to send to server
+		client.handleMessageFromClientUI(command);
+	}
+	else if (command.equals("transfer"))
+	{
+		String idFrom = "";
+		String transferAmount = "";
+		String idTo = "";
+		System.out.println("Please enter the account id from which the funds will originate");
+		try {idFrom = fromConsole.readLine();}
+		catch (Exception ex) {}
+		System.out.println("Please enter the account id to which the funds will go");
+		try {idTo = fromConsole.readLine();}
+		catch (Exception ex) {}
+		System.out.println("Please enter the amount of the transfer");
+		try {transferAmount = fromConsole.readLine();}
+		catch (Exception ex) {}
+		
+		command += " " + idFrom + "." + transferAmount + "&" + idTo + "#";
+		
+		client.handleMessageFromClientUI(command);
+	}
+	else if (command.equals("close"))
+	{
+		String answer = "";
+		String closingAccountID = "";
+		System.out.println("Please enter the name of the account that you wish to close");
+		try{
+		closingAccountID = fromConsole.readLine();
+		} catch (IOException ex) {};
+		do {
+			System.out.println("Are you sure? y/n");
+			try {
+				answer = fromConsole.readLine();
+			} catch (IOException ex) {};
+		} while (!answer.toLowerCase().equals("y") && !answer.toLowerCase().equals("n"));
+		command += " " + closingAccountID + ".";
+		client.handleMessageFromClientUI(command);
+	}
+	else if (command.equals("view"))
+	{
+		String view = "";
+		System.out.println("Please enter the name of the account that you with to view");
+		try {
+			view = fromConsole.readLine();
+		} catch (IOException ex) {};
+		command += " " + view + ".";
+		client.handleMessageFromClientUI(command);
+	}
+	else if (command.startsWith("exit"))
+	{
+		client.handleMessageFromClientUI(command);
+		System.out.println("Thank you, come again!");
+		System.exit(0);
 	}
   }
   /**

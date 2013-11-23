@@ -92,7 +92,6 @@ public class BankServer extends AbstractServer
 	  {	  // send to command handling
 			 handleCommand(message, client);
 	  }
-    System.out.println("Message received: " + client.getInfo("loginID") + ": " + msg);
   }
   
    
@@ -104,7 +103,7 @@ public class BankServer extends AbstractServer
   {
     System.out.println
       ("BankServer is now listening for client" +
-      		" connections on port " + getPort());
+      		" connections");
   }
   
   /**
@@ -147,32 +146,26 @@ public class BankServer extends AbstractServer
   /////////////////////////////////////////////Added 50C      MA/ND
   private void handleCommand(String command, ConnectionToClient client) //New method created to handle server commands
   {	
+
+	  String fileName = ("Accounts.txt");
 	  
-	  int amount = 5;
-	  System.out.println(command);
+	  int amount = 5;    //initialize constant
 		 if (command.startsWith("exit")) 
 		 {
-			 sendToAllClients("Thank You, Come Again!");
 			 System.exit(0);  //Shuts down the server
 		 }
 		 
-		 else if (command.startsWith("~"))  //Commands for loging in
+		 else if (command.startsWith("~"))  //Commands for logging in
 		 {
-			 String fileName = ("Accounts.txt");
+
 			 command = command.substring(1);
-			 try{     
-		          PrintWriter pw = new PrintWriter(new FileOutputStream(fileName, true)); 
+			 try
+			 {     
+				PrintWriter pw = new PrintWriter(new FileOutputStream(fileName, true));
 		        pw.println(command);  
 		        pw.close(); 
-		        String accountID=command;
-				accountID=accountID.substring(0,accountID.indexOf(' '));
-				 File file = new File(accountID +".txt");
-				 file.createNewFile();
-				 System.out.println("New file created");
-		    }
-	    catch(IOException iox) {
-	    System.out.println("Problem writing " + fileName);
-	    }
+			 }
+			 catch(IOException iox) {System.out.println("Problem writing " + fileName);}
 			 
 			 
 			 
@@ -180,7 +173,6 @@ public class BankServer extends AbstractServer
 		 
 		 else if (command.startsWith("&"))  //Commands for loging in
 		 {
-			 String fileName = ("Accounts.txt");
 			 command= command.substring(1);
 			 try{
 			 BufferedReader br = new BufferedReader(new FileReader(fileName));
@@ -216,7 +208,6 @@ public class BankServer extends AbstractServer
 	 	
 		 else if (command.startsWith("new"))
 		 {
-			 
 			 String interestRate;
 			 String yearlyFee;
 			 
@@ -241,58 +232,174 @@ public class BankServer extends AbstractServer
 			  	String initial = command.substring(a, b);
 			  	amount = Integer.parseInt(initial);
 			  	
-			  	Savings sAccount = new Savings(amount, "001", interestRate, yearlyFee); //construct new savings account instance
-		}
+				a = command.indexOf('&') + 1;
+			  	b = command.indexOf('?');
+			  	String name = command.substring(a, b) + ".txt";
+			  	
+			  	Savings sAccount = new Savings(amount, name, interestRate, yearlyFee); //construct new savings account instance
+			  	
+				File file = new File(name);
+			  	
+			  	if (!file.exists())
+			  	{
+			  		try{
+			  		file.createNewFile();
+				
+					PrintWriter pw1 = new PrintWriter(new FileOutputStream(name, true));    // write account name and balance to a file, to be retrieved and altered by other methods if required
+					pw1.println(amount);  
+		        	pw1.close(); 
+			  		}
+			  		catch(IOException iox) {System.out.println("Problem writing " + name);}
+			  	}else try {client.sendToClient("That filename is already in use, please try again");}
+			  	catch (IOException ex) {}
+
+		 }
 		    
-		 else if (command.startsWith("access"))
+		 else if (command.startsWith("view"))
 		 {
 				int a = command.indexOf(' ') + 1;
 			  	int b = command.indexOf('.');
-			  	String accessAccountID = command.substring(a, b);    //read account ID to be accessed
+			  	int balance = 0;
+			  	String view = command.substring(a, b) + ".txt";    //read account ID to be accessed
+		  		File viewFile = new File(view);
+		  		if (viewFile.exists())
+		  		{
+			  	try {Scanner in = new Scanner(new FileReader(view));
+		  		balance = in.nextInt();
+		  		in.close();}
+			  	catch (IOException ex) {};
+		  		}
+		  		try {
+		  		client.sendToClient("The balance of this account is " + balance);
+		  		} catch (IOException ex) {};
+			  	
 		 }
 		 
 		 else if (command.startsWith("close")) 
 		 {
 				int a = command.indexOf(' ') + 1;
 			  	int b = command.indexOf('.');
-			  	String closedAccountID = command.substring(a, b);    //read account ID to be closed
+			  	String closedAccountID = command.substring(a, b) + ".txt";    //read account ID to be closed
+			  	File myFile = new File(closedAccountID);
+			  	if(myFile.exists())
+			  	{
+			  	    myFile.delete();
+			  	    try {
+			  	    client.sendToClient("The " + closedAccountID + " account has been deleted");
+			  	    } catch (IOException ex) {};
+			  	} else try {client.sendToClient("Invalid account name");}
+			  	catch (IOException ex) {};
 		 }
 		 
-		 else if (command.startsWith("deposit"))
+		 else if (command.startsWith("deposit"))   //Branch if user wishes to deposit funds
 		 {
 				int a = command.indexOf(' ') + 1;
 			  	int b = command.indexOf('.');
-			  	String accountID = command.substring(a, b);    //read account ID to be deposited into
+			  	String accountID = command.substring(a, b) + ".txt";    //read account ID to be deposited into
+			  	
 				a = command.indexOf('.') + 1;
 			  	b = command.indexOf('&');
 			  	String deposit = command.substring(a, b);
 			  	int depositAmount = Integer.parseInt(deposit);  //read deposit amount to deposit
+			  	
+			  	File myFile = new File(accountID);
+			  	
+			  	if(myFile.exists())
+			  	{
+			  	try{
+			  		Scanner in = new Scanner(new FileReader(accountID));
+			  		int balance = in.nextInt();
+			  		in.close();
+			  		client.sendToClient("The previous balance was " + balance);
+			  		balance += depositAmount;
+			  		client.sendToClient("Balance is now " + balance);
+			  		PrintWriter pw1 = new PrintWriter(new FileOutputStream(accountID, false));    // write account name and balance to a file, to be retrieved and altered by other methods if required
+			  		pw1.println(balance);  
+		        	pw1.close(); 
+			  		}catch(IOException iox) {}
+			  	} else try {client.sendToClient("Invalid account ID");}
+			  	catch (IOException ex) {}
+
 		 }
 		 
-		 else if (command.startsWith("withdraw"))
+		 else if (command.startsWith("withdraw"))    //Branch if user wishes to withdraw funds
 		 {
 				int a = command.indexOf(' ') + 1;
 			  	int b = command.indexOf('.');
-			  	String accountID = command.substring(a, b);    //read account ID to be deposited into
+			  	String accountID = command.substring(a, b) + ".txt";    //read account ID to be deposited into
 				a = command.indexOf('.') + 1;
 			  	b = command.indexOf('&');
 			  	String withdrawal = command.substring(a, b);
 			  	int withdrawAmount = Integer.parseInt(withdrawal);  //read withdrawal amount to withdraw
+			  	
+			  	File myFile = new File(accountID); //make sure file exists
+			  	if(myFile.exists())
+			  	{
+			  		try{
+			  		Scanner in = new Scanner(new FileReader(accountID));
+			  		int balance = in.nextInt();
+			  		in.close();
+			  		client.sendToClient("The previous account balance was " + balance);
+			  		balance -= withdrawAmount;
+			  		client.sendToClient("The account balance is now " + balance);
+			  		PrintWriter pw1 = new PrintWriter(new FileOutputStream(accountID, false));    // write account name and balance to a file, to be retrieved and altered by other methods if required
+			  		pw1.println(balance);  
+		        	pw1.close(); 
+			  		}catch(IOException iox) {}
+			  	} else try {client.sendToClient("Invalid account ID");}
+			  	catch (IOException ex) {}			  	
 		 }
 		 else if (command.startsWith("transfer"))
 		 {
 				int a = command.indexOf(' ') + 1;
 			  	int b = command.indexOf('.');
-			  	String fromAccountID = command.substring(a, b);    //read account ID to be deposited into
+			  	String fromAccountID = command.substring(a, b) + ".txt";    //read account ID to be deposited into
+			  	
 				a = command.indexOf('.') + 1;
 			  	b = command.indexOf('&');
 			  	String transfer = command.substring(a, b);
 			  	int transferAmount = Integer.parseInt(transfer);  //read transfer amount to transfer
 				a = command.indexOf('&') + 1;
 			  	b = command.indexOf('#');
-			  	String toAccountID = command.substring(a, b); //read destination account information
+			  	String toAccountID = command.substring(a, b) + ".txt"; //read destination account information
+			  	
+			  	File fileFrom = new File(fromAccountID); //make sure file exists
+			  	File fileTo = new File(toAccountID);
+			  	if(fileFrom.exists())
+			  	{
+			  		if (fileTo.exists())
+			  		{
+			  			try
+			  			{
+			  			Scanner in = new Scanner(new FileReader(fromAccountID));
+			  			int balanceFrom = in.nextInt();
+			  			in.close();
+			  			Scanner in2 = new Scanner(new FileReader(toAccountID));
+			  			int balanceTo = in2.nextInt();
+			  			in2.close();
+			  			
+			  			client.sendToClient("The balance of account " + fromAccountID + " was " + balanceFrom);
+			  			balanceFrom -= transferAmount;
+			  			client.sendToClient("The balance of account " + fromAccountID + " is now " + balanceFrom);
+			  			PrintWriter pw1 = new PrintWriter(new FileOutputStream(fromAccountID, false));    // write account name and balance to a file, to be retrieved and altered by other methods if required
+			  			pw1.println(balanceFrom);  
+			  			pw1.close(); 
+			  			
+			  			client.sendToClient("The balance of account " + toAccountID + " was " + balanceTo);
+			  			balanceTo += transferAmount;
+			  			client.sendToClient("The balance of account " + toAccountID + " is now " + balanceTo);
+			  			PrintWriter pw2 = new PrintWriter(new FileOutputStream(toAccountID, false));    // write account name and balance to a file, to be retrieved and altered by other methods if required
+			  			pw2.println(balanceTo);  
+			  			pw2.close(); 
+			  			
+			  			
+			  			}catch(IOException iox) {}
+			  		} else try {client.sendToClient("Invalid account ID");}
+			  		catch (IOException ex) {}	
+			  	}
 		 }
-  }
+	}
+  
   
   
   public static void main(String[] args) 

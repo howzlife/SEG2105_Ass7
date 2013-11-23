@@ -33,7 +33,6 @@ public class Savings //extends Account
   //------------------------
 
 
-
 public boolean setInterestRate(String aInterestRate)
   {
     boolean wasSet = false;

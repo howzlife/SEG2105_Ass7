@@ -47,7 +47,7 @@ public class ClientConsole implements ChatIF
   public ClientConsole(String host, int port) 
   {    
 	  /////////////////////////////////////////Changed for E49b and E51 M.A/N.D
-
+	  String loginCommand=null;
 	  String loginID = ""; // New String variable used to store the value of the BufferedReader
 	  BufferedReader fromConsole =  new BufferedReader(new InputStreamReader(System.in));   // Creates new reader for the input
 	  String password = "";
@@ -74,25 +74,18 @@ public class ClientConsole implements ChatIF
 			  	{
 				  System.out.println("The passwords do not match!");
 			  	}
+			  	else if (p1.equals("")) System.out.println("The password cannot be null");
 			  }
-			  while (!p1.equals(password));
+			  while (!p1.equals(password) || p1.equals(""));
+			  loginCommand=("~"+loginID+" "+password);
 		  }
 		  else 
 		  {
 			  System.out.println("Please enter your password");
 			  password = fromConsole.readLine();
+			  loginCommand=("&"+loginID+" "+password);
 		  }
-		  
-		  System.out.println("Welcome! Select one of the following");
-		  System.out.println("***********************************");
-		  System.out.println("***********************************");
-		  System.out.println("**       New - Access - Close -  **");
-		  System.out.println("**       Deposit - Withdraw -    **");
-		  System.out.println("********  Transfer - Exit *********");
-		  System.out.println("***********************************");
-		  System.out.println("***********************************");
-		  // Asks the user for the port number
-		  }
+		 }
 		  catch (Exception ex) //If an error occurs
 		    {
 		      System.out.println ("Unexpected error while reading from console!"); 
@@ -109,6 +102,7 @@ public class ClientConsole implements ChatIF
                 + " Terminating client.");
       System.exit(1);
     }
+    client.handleMessageFromClientUI(loginCommand);
   }
   
   //Instance methods ************************************************
@@ -127,8 +121,17 @@ public class ClientConsole implements ChatIF
 
       while (true) 
       {
-        message = fromConsole.readLine();
-        client.handleMessageFromClientUI(message);
+    	do{
+  		  System.out.println("Welcome! Select one of the following");
+  		  System.out.println("***********************************");
+  		  System.out.println("***********************************");
+  		  System.out.println("**       New - Access - Close -  **");
+  		  System.out.println("**       Deposit - Withdraw -    **");
+  		  System.out.println("********  Transfer - Exit *********");
+  		  System.out.println("*******Please enter a command******");
+        message = fromConsole.readLine().toLowerCase();
+    	} while (!message.equals("new") && !message.equals("access") && !message.equals("close") && !message.equals("deposit") && !message.equals("withdraw") && !message.equals("transfer") && !message.equals("exit"));
+    	handleUICommand(message);
       }
     } 
     catch (Exception ex) 
@@ -136,8 +139,88 @@ public class ClientConsole implements ChatIF
       System.out.println
         ("Unexpected error while reading from console!");
     }
+    
   }
 
+  /**
+   * The following handles commands entered by the user, and sends them
+   * as a string of commands to the bankserver to perform the required actions. 
+   */
+  public void handleUICommand(String command) 
+  {
+	BufferedReader fromConsole =  new BufferedReader(new InputStreamReader(System.in));
+	String accountType = "";
+	String temp = " ";
+	if (command.equals("new"))   //"new" branch
+	{
+		do {
+			try{
+		System.out.println("would you like a Savings Account (enter S) or Chequings Account (Enter C)"); //user must select one of the two
+		accountType = fromConsole.readLine().toLowerCase();
+			}
+		    catch (Exception ex) 
+		    {
+		      System.out.println
+		        ("Unexpected error while reading from console!");
+		    }
+		} while (!accountType.equals("s") && !accountType.equals("c"));
+		command = command + " " + accountType;         //append to command, will be sent to server at the end
+				
+		System.out.println("How many funds would you like to deposit?");   //initial deposit
+		try{
+		temp = fromConsole.readLine();
+		}
+	    catch (Exception ex) 
+	    {
+	      System.out.println
+	        ("Unexpected error while reading from console!");
+	    }
+		command += "." + temp + "&";
+		
+		if (accountType.equals("s")){
+		System.out.println("Congratulations! You have a new Savings Account!");
+		System.out.println("Your current balance is " + temp + "$. ");
+		System.out.println("Annual interest rate: 5%.");
+		System.out.println("Annual fees: 25$");
+		}
+		else if (accountType.equals("c"))
+		{
+			System.out.println("Congratulations! You have a new Chequings Account!");
+			System.out.println("Your current balance is " + temp + "$. ");
+			System.out.println("Annual interest rate: 3%.");
+			System.out.println("Annual fees: 0$");	
+			
+		}
+        System.out.println("Please press Enter to continue");
+        try{
+        String dummy = fromConsole.readLine();
+        client.handleMessageFromClientUI(command);   ///Send command to Server, to activate new account.   
+        }	    
+        catch (Exception ex) 
+	    {
+  	    }
+        client.handleMessageFromClientUI(command);   
+	}
+	else if (command.equals("deposit"))
+	{
+		String id = "";
+		String deposit = ""; 
+		System.out.println("Please enter the account ID");
+		try{
+			id = fromConsole.readLine();   //read account id, as a string
+		} catch (Exception ex) {};
+		System.out.println("Please enter the amount of the deposit");
+		try
+		{
+			deposit = fromConsole.readLine();  //read deposit amount, as a string
+		}
+		  catch (Exception ex) //If an error occurs
+		    {
+		    }
+		command += " " + id + "." + deposit + "&"; //Put together data string
+        client.handleMessageFromClientUI(command); //Send to BankServer to be analysed 
+	}
+  }
   /**
    * This method overrides the method in the ChatIF interface.  It
    * displays a message onto the screen.
@@ -162,7 +245,6 @@ public class ClientConsole implements ChatIF
   public static void main(String[] args) 
   {
     String host = "";
-    int port = 0;  //The port number
 
     try
     {

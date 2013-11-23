@@ -17,6 +17,8 @@ import ocsf.server.*;
  * @author Paul Holden
  * @version July 2000
  */
+
+
 public class BankServer extends AbstractServer 
 {
   //Class variables *************************************************
@@ -88,9 +90,8 @@ public class BankServer extends AbstractServer
 			  }
 	  else 
 	  {	  // send to command handling
-			 handleCommand(message, login, client);
+			 handleCommand(message, client);
 	  }
-	  ///////////////////////////////////////////ADDED FOR E51B     MA/ND
     System.out.println("Message received: " + client.getInfo("loginID") + ": " + msg);
   }
   
@@ -144,110 +145,154 @@ public class BankServer extends AbstractServer
 
   
   /////////////////////////////////////////////Added 50C      MA/ND
-  private void handleCommand(String command, String loginID, ConnectionToClient client) //New method created to handle server commands
+  private void handleCommand(String command, ConnectionToClient client) //New method created to handle server commands
   {	
+	  
+	  int amount = 5;
 	  System.out.println(command);
-	  BufferedReader fromConsole = new BufferedReader(new InputStreamReader(System.in));   // Creates new reader for the input
-	  String answer = "";
-	  Date dt = new Date();
-		 if (command.toLowerCase().equals("exit")) 
+		 if (command.startsWith("exit")) 
 		 {
 			 sendToAllClients("Thank You, Come Again!");
 			 System.exit(0);  //Shuts down the server
 		 }
-	 	
-		 else if (command.equals("new"))
-		 {
-			 do{
-				 try{
-				 client.sendToClient("Please enter S (savings) or C (chequings)");
-				 answer = fromConsole.readLine();      //get next step from console
-				 System.out.println(answer);
-				 }
-						 catch (IOException ex) //If an error occurs
-				 {
-				 }
-			 } 
-			 while (!answer.equals("s") && !answer.equals("c"));
-	
-			 if (answer.equals("s"))
-			 {
-				 Savings save1 = new Savings(0, "0001", dt, loginID, 5, 50); //create savings account
-				 try {
-				 client.sendToClient("Savings account created. Your balance is");
-				 client.sendToClient("currently 0$. Please select one of the following:");
-				 client.sendToClient("Deposit, Withdraw, Transfer, Close ");
-				 }
-			  		catch (IOException ex)
-			  		{	
-			  		}
-				 Boolean active = true;
-				 do{
-				 	try {
-					String response = fromConsole.readLine();
-				 	}
-			     	catch (IOException ex) //If an error occurs
-				 	{
-				 	};	 
-				 	active = false;
-				 }
-				 while (active == true);
-			 }
-		}
 		 
-		 else if (command.equals("&#close"))
+		 else if (command.startsWith("~"))  //Commands for loging in
 		 {
-			 stopListening();
-			 try{
-			 close();  //Closes the server
-			 }
-			 catch (IOException ex) //If an error occurs
-			    {
-			      System.out.println ("Unexpected error while trying to close!"); 
-			    }
+			 String fileName = ("Accounts.txt");
+			 command = command.substring(1);
+			 try{     
+		          PrintWriter pw = new PrintWriter(new FileOutputStream(fileName, true)); 
+		        pw.println(command);  
+		        pw.close(); 
+		        String accountID=command;
+				accountID=accountID.substring(0,accountID.indexOf(' '));
+				 File file = new File(accountID +".txt");
+				 file.createNewFile();
+				 System.out.println("New file created");
+		    }
+	    catch(IOException iox) {
+	    System.out.println("Problem writing " + fileName);
+	    }
+			 
+			 
 			 
 		 }
 		 
-		 else if (command.equals("&#setport")) 
+		 else if (command.startsWith("&"))  //Commands for loging in
 		 {
-			 System.out.println("Please enter new port");
+			 String fileName = ("Accounts.txt");
+			 command= command.substring(1);
 			 try{
-				  int newPort; // New String variable used to store the value of the BufferedReader
-				  System.out.println("Enter New host(IP)");
-				  newPort = Integer.parseInt(fromConsole.readLine());  //Reads the line and sets it to the new variable
-				  
-				  setPort(newPort);
-				  System.out.println("The new port is"+newPort);
-				  }
-				  catch (Exception ex) //If an error occurs
-				    {
-				      System.out.println ("Unexpected error while reading from console!"); 
-				    }
-		 }
-		 
-		 else if (command.equals("&#start"))
-		 {
-			 if (!isListening())  //Checks if the server is currently listening
-			 {
-				 try{
-					 listen();  //Makes the server start listening
-					 }
-					 catch (IOException ex) //If an error occurs
-					    {
-					      System.out.println ("Unexpected error while trying to start listening!"); 
-					    }
+			 BufferedReader br = new BufferedReader(new FileReader(fileName));
+			 String line;
+			 boolean found=false;
+			 while ((line = br.readLine()) != null) {
+				 System.out.println(line+" Line input");
+				 System.out.println(command+" command input");
+			    if(line.equals(command))
+			    	{
+			    	System.out.println("test");
+			    	found=true;
+			    	break;
+			    	}
 			 }
+			 br.close();
+			 if(!found)
+			 {
+				 client.sendToClient("Error:Wrong password or login");
+				 close();
+			 }
+			 else
+			 {
+				 client.sendToClient("Login succesful");
+			 }
+			 
 		 }
-		 
-		 else if (command.equals("&#getport"))
+		    catch(IOException iox) {
+		    System.out.println("Problem reading " + fileName);
+		    }
+			 
+		 }
+	 	
+		 else if (command.startsWith("new"))
 		 {
-			 int port;
-			 port = getPort();  //Gets the current port
-			 System.out.println("The current port is:"+port); //Prints the current port
+			 
+			 String interestRate;
+			 String yearlyFee;
+			 
+				int a = command.indexOf(' ') + 1;
+			  	int b = command.indexOf('.');
+			  	String accountType = command.substring(a, b);
+			 	
+			  	if (accountType.equals("c"))
+			  	{
+			  		interestRate = "3%";
+			  		yearlyFee = "0$";
+			  	}
+			  	else
+			  	{
+			  		interestRate= "5%";
+			  		yearlyFee = "25$";
+			  	}
+			  	
+			  	
+				a = command.indexOf('.') + 1;
+			  	b = command.indexOf('&');
+			  	String initial = command.substring(a, b);
+			  	amount = Integer.parseInt(initial);
+			  	
+			  	Savings sAccount = new Savings(amount, "001", interestRate, yearlyFee); //construct new savings account instance
+		}
+		    
+		 else if (command.startsWith("access"))
+		 {
+				int a = command.indexOf(' ') + 1;
+			  	int b = command.indexOf('.');
+			  	String accessAccountID = command.substring(a, b);    //read account ID to be accessed
 		 }
 		 
+		 else if (command.startsWith("close")) 
+		 {
+				int a = command.indexOf(' ') + 1;
+			  	int b = command.indexOf('.');
+			  	String closedAccountID = command.substring(a, b);    //read account ID to be closed
+		 }
+		 
+		 else if (command.startsWith("deposit"))
+		 {
+				int a = command.indexOf(' ') + 1;
+			  	int b = command.indexOf('.');
+			  	String accountID = command.substring(a, b);    //read account ID to be deposited into
+				a = command.indexOf('.') + 1;
+			  	b = command.indexOf('&');
+			  	String deposit = command.substring(a, b);
+			  	int depositAmount = Integer.parseInt(deposit);  //read deposit amount to deposit
+		 }
+		 
+		 else if (command.startsWith("withdraw"))
+		 {
+				int a = command.indexOf(' ') + 1;
+			  	int b = command.indexOf('.');
+			  	String accountID = command.substring(a, b);    //read account ID to be deposited into
+				a = command.indexOf('.') + 1;
+			  	b = command.indexOf('&');
+			  	String withdrawal = command.substring(a, b);
+			  	int withdrawAmount = Integer.parseInt(withdrawal);  //read withdrawal amount to withdraw
+		 }
+		 else if (command.startsWith("transfer"))
+		 {
+				int a = command.indexOf(' ') + 1;
+			  	int b = command.indexOf('.');
+			  	String fromAccountID = command.substring(a, b);    //read account ID to be deposited into
+				a = command.indexOf('.') + 1;
+			  	b = command.indexOf('&');
+			  	String transfer = command.substring(a, b);
+			  	int transferAmount = Integer.parseInt(transfer);  //read transfer amount to transfer
+				a = command.indexOf('&') + 1;
+			  	b = command.indexOf('#');
+			  	String toAccountID = command.substring(a, b); //read destination account information
+		 }
   }
-  /////////////////////////////////////////////////////ADDED for E50C MA/ND
   
   
   public static void main(String[] args) 

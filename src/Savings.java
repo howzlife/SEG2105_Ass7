@@ -23,7 +23,7 @@ public class Savings extends Account
   // CONSTRUCTOR
   //------------------------
 
-  public Savings(int aBalance, int aId, String aDateCreated, BankServer aBankServer, int aInterestRate, int aYearlyFee)
+  public Savings(int aBalance, String aId, String aInterestRate, String aYearlyFee)
   {
     super(aBalance, aId, aDateCreated, aBankServer);
     interestRate = aInterestRate;

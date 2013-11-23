@@ -14,14 +14,14 @@ public class Savings //extends Account
   //------------------------
 
   //Savings Attributes
-  private int interestRate;
-  private int yearlyFee;
+  private String interestRate;
+  private String yearlyFee;
 
   //------------------------
   // CONSTRUCTOR
   //------------------------
 
-  public Savings(int aBalance, String aId, Date aDateCreated, String userID, int aInterestRate, int aYearlyFee)
+  public Savings(int aBalance, String aId, String aInterestRate, String aYearlyFee)
   {
     //super(aBalance, aId, aDateCreated, aBankServer);
     interestRate = aInterestRate;
@@ -32,7 +32,9 @@ public class Savings //extends Account
   // INTERFACE
   //------------------------
 
-  public boolean setInterestRate(int aInterestRate)
+
+
+public boolean setInterestRate(String aInterestRate)
   {
     boolean wasSet = false;
     interestRate = aInterestRate;
@@ -40,7 +42,7 @@ public class Savings //extends Account
     return wasSet;
   }
 
-  public boolean setYearlyFee(int aYearlyFee)
+  public boolean setYearlyFee(String aYearlyFee)
   {
     boolean wasSet = false;
     yearlyFee = aYearlyFee;
@@ -48,12 +50,12 @@ public class Savings //extends Account
     return wasSet;
   }
 
-  public int getInterestRate()
+  public String getInterestRate()
   {
     return interestRate;
   }
 
-  public int getYearlyFee()
+  public String getYearlyFee()
   {
     return yearlyFee;
   }
